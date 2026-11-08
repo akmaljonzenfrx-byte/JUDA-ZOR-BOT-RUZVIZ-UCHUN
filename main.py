@@ -475,7 +475,7 @@ def share_link(uid):
 
 
 def tb(label):
-    """Tugma: bosilganda matn xabari kabi ishlaydi (t:<matn>)."""
+    """Reply klaviatura o'rniga inline tugma: bosilganda matn xabari kabi ishlaydi."""
     return IB(label, callback_data="t:" + label)
 
 
@@ -1840,6 +1840,8 @@ async def cb_a(update, ctx, a):
         n = lambda sql, p=(): one(sql, p)[0]
         day0 = int(now().replace(hour=0, minute=0, second=0).timestamp())
         act = ts() - sti("ad_hours") * 3600
+        PEND_O = "SELECT COUNT(*) FROM orders WHERE status='pending'"
+        PEND_W = "SELECT COUNT(*) FROM withdrawals WHERE status='pending'"
         txt = ("📊 <b>Statistika</b>\n\n"
                f"👥 Foydalanuvchilar: {n('SELECT COUNT(*) FROM users')} (tasdiqlangan: {n('SELECT COUNT(*) FROM users WHERE verified=1')})\n"
                f"🆕 Bugun qo'shilgan: {n('SELECT COUNT(*) FROM users WHERE joined>?', (day0,))}\n"
@@ -1847,8 +1849,8 @@ async def cb_a(update, ctx, a):
                f"💎 Jami balans: {n('SELECT COALESCE(SUM(balance),0) FROM users')} | Jami topilgan: {n('SELECT COALESCE(SUM(earned),0) FROM users')}\n"
                f"🎰 Spinlar: {n('SELECT COALESCE(SUM(spins_total),0) FROM users')}\n"
                f"🔐 Nastroyka kodlari: {n('SELECT COUNT(*) FROM ncodes')}\n"
-               f"🧾 Kutilayotgan buyurtma: {n(\"SELECT COUNT(*) FROM orders WHERE status='pending'\")}\n"
-               f"💳 Kutilayotgan yechish: {n(\"SELECT COUNT(*) FROM withdrawals WHERE status='pending'\")}\n"
+               f"🧾 Kutilayotgan buyurtma: {n(PEND_O)}\n"
+               f"💳 Kutilayotgan yechish: {n(PEND_W)}\n"
                f"📢 Faol sherik e'lonlari: {n('SELECT COUNT(*) FROM partner_ads WHERE ts>?', (act,))}")
         await q.answer()
         await aedit(update, txt, IM([back()]))
@@ -2299,7 +2301,7 @@ CB = {"cap": cb_cap, "sub": cb_sub, "spin": cb_spin, "bonus": cb_bonus, "ptr": c
       "prof": cb_prof, "lvl": cb_lvl, "it": cb_item, "cat": cb_cat, "buy": cb_buy, "buyok": cb_buyok,
       "x": cb_x, "ord": cb_ord, "wd": cb_wd, "a": cb_a, "as": cb_as, "ac": cb_ac, "ap": cb_ap,
       "ar": cb_ar, "at": cb_at, "ae": cb_ae, "al": cb_al, "aa": cb_aa, "au": cb_au,
-      "bx": cb_bx, "zt": cb_zt, "gs": cb_gs, "gm": lambda u, c, a: guess_menu(u, c),
+      "bx": cb_bx, "zt": cb_zt, "gs": cb_gs,
       "nst": cb_nst, "nb": cb_nb, "nm": cb_nm, "np": cb_np, "nref": cb_nref, "nhelp": cb_nhelp,
       "ncust": cb_ncust, "nai": cb_nai, "na": cb_na}
 ADMIN_CB = {"ord", "wd", "a", "as", "ac", "ap", "ar", "at", "ae", "al", "aa", "au", "na"}
