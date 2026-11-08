@@ -479,9 +479,20 @@ def tb(label):
     return IB(label, callback_data="t:" + label)
 
 
+# Pastki tugmalar ranglari: qizil, yashil, ko'k navbatma-navbat (har bir tugma boshqa rangda)
+RK_COLORS = ["danger", "success", "primary"]
+
+
 def rk(*rws):
-    """Pastki (reply) klaviatura — yozish maydoni ustida chiqadi."""
-    return ReplyKeyboardMarkup([list(r) for r in rws], resize_keyboard=True)
+    """Pastki (reply) klaviatura. Har bir tugma boshqa rangda chiqadi."""
+    out, i = [], 0
+    for row in rws:
+        r = []
+        for text in row:
+            r.append(KeyboardButton(text, api_kwargs={"style": RK_COLORS[i % len(RK_COLORS)]}))
+            i += 1
+        out.append(r)
+    return ReplyKeyboardMarkup(out, resize_keyboard=True)
 
 
 def back(cb="a:home"):
