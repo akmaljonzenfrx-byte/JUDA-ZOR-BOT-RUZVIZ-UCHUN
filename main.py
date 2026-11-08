@@ -475,12 +475,13 @@ def share_link(uid):
 
 
 def tb(label):
-    """Reply klaviatura o'rniga inline tugma: bosilganda matn xabari kabi ishlaydi."""
+    """Inline tugma: bosilganda matn xabari kabi ishlaydi (t:<matn>)."""
     return IB(label, callback_data="t:" + label)
 
 
 def rk(*rws):
-    return IM([[tb(l) for l in row] for row in rws])
+    """Pastki (reply) klaviatura — yozish maydoni ustida chiqadi."""
+    return ReplyKeyboardMarkup([list(r) for r in rws], resize_keyboard=True)
 
 
 def back(cb="a:home"):
@@ -1222,16 +1223,22 @@ async def cb_bonus(update, ctx, a):
 
 
 # Quti o'yini
+def box_kb():
+    return IM([[IB("📦", callback_data="bx:0"), IB("📦", callback_data="bx:1"), IB("📦", callback_data="bx:2")],
+               [tb(B_BACK)]])
+
+
 async def box_menu(update, ctx):
     clrst(ctx)
-    await say(update, f"🎲 <b>Quti o'yini</b>\n\nHar o'yin narxi: <b>{BOX_COST} 💎</b>\nQutini tanlang 👇",
-              IM([[IB("📦", callback_data="bx:0"), IB("📦", callback_data="bx:1"), IB("📦", callback_data="bx:2")],
-                  [tb(B_BACK)]]))
+    await say(update, f"🎲 <b>Quti o'yini</b>\n\nHar o'yin narxi: <b>{BOX_COST} 💎</b>\nQutini tanlang 👇", box_kb())
 
 
 async def cb_bx(update, ctx, a):
     q = update.callback_query
     uid = q.from_user.id
+    if a[1] == "again":
+        await q.answer()
+        return await aedit(update, f"🎲 <b>Quti o'yini</b>\n\nHar o'yin narxi: <b>{BOX_COST} 💎</b>\nQutini tanlang 👇", box_kb())
     r = get_user(uid)
     if r["balance"] < BOX_COST:
         return await q.answer(f"❌ Almaz yetarli emas (kerak: {BOX_COST} 💎)", show_alert=True)
@@ -1274,11 +1281,21 @@ async def cb_zt(update, ctx, a):
 
 
 # Son tanlash
+def guess_kb():
+    btns = [IB(str(n), callback_data=f"gs:{n}") for n in range(1, 6)]
+    return IM([btns, [tb(B_BACK)]])
+
+
 async def guess_menu(update, ctx):
     clrst(ctx)
-    btns = [IB(str(n), callback_data=f"gs:{n}") for n in range(1, 6)]
     await say(update, f"🔢 <b>Son tanlash</b>\n\nBot 1 dan 5 gacha bitta son o'yladi.\n"
-                      f"Urinish: {GUESS_COST} 💎. To'g'ri topsangiz +{GUESS_WIN} 💎!", IM([btns, [tb(B_BACK)]]))
+                      f"Urinish: {GUESS_COST} 💎. To'g'ri topsangiz +{GUESS_WIN} 💎!", guess_kb())
+
+
+async def cb_gm(update, ctx, a):
+    await update.callback_query.answer()
+    await aedit(update, f"🔢 <b>Son tanlash</b>\n\nBot 1 dan 5 gacha bitta son o'yladi.\n"
+                        f"Urinish: {GUESS_COST} 💎. To'g'ri topsangiz +{GUESS_WIN} 💎!", guess_kb())
 
 
 async def cb_gs(update, ctx, a):
@@ -2301,14 +2318,14 @@ CB = {"cap": cb_cap, "sub": cb_sub, "spin": cb_spin, "bonus": cb_bonus, "ptr": c
       "prof": cb_prof, "lvl": cb_lvl, "it": cb_item, "cat": cb_cat, "buy": cb_buy, "buyok": cb_buyok,
       "x": cb_x, "ord": cb_ord, "wd": cb_wd, "a": cb_a, "as": cb_as, "ac": cb_ac, "ap": cb_ap,
       "ar": cb_ar, "at": cb_at, "ae": cb_ae, "al": cb_al, "aa": cb_aa, "au": cb_au,
-      "bx": cb_bx, "zt": cb_zt, "gs": cb_gs,
+      "bx": cb_bx, "zt": cb_zt, "gs": cb_gs, "gm": cb_gm,
       "nst": cb_nst, "nb": cb_nb, "nm": cb_nm, "np": cb_np, "nref": cb_nref, "nhelp": cb_nhelp,
       "ncust": cb_ncust, "nai": cb_nai, "na": cb_na}
 ADMIN_CB = {"ord", "wd", "a", "as", "ac", "ap", "ar", "at", "ae", "al", "aa", "au", "na"}
 
 
 async def route_text(update, ctx, t):
-    """Matnli xabar va 't:' tugmalari shu yerda ishlaydi."""
+    """Pastki tugmalar va matnli xabarlar shu yerda ishlaydi."""
     uid = update.effective_user.id
     if not await gate(update, ctx):
         return
